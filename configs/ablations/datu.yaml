@@ -1,0 +1,16 @@
+ablation:
+  id: DATU_COMPONENTS
+  variants:
+    - datu_full
+    - datu_no_uncertainty
+    - datu_no_sensitivity
+    - datu_no_local_support
+  frozen_reference:
+    ensemble_size: 5
+    critic_steps_per_member: 100000
+    knn_k: 50
+    aggregation: topk_mean
+    topk_fraction: 0.10
+  reference_dataset: data/processed/matched/pointmaze_medium/reference_critical_high
+  preregistration: data/manifests/lab_review_core_v1/pre_registration.json
+  execute: false

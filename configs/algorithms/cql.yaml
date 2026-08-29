@@ -1,0 +1,13 @@
+algorithm:
+  name: cql
+  hidden_dims: [256, 256]
+  actor_lr: 0.0003
+  critic_lr: 0.0003
+  alpha_lr: 0.0003
+  discount: 0.99
+  tau: 0.005
+  entropy_alpha: 0.2
+  automatic_entropy_tuning: true
+  cql_alpha: 5.0
+  cql_n_actions: 10
+  cql_temperature: 1.0

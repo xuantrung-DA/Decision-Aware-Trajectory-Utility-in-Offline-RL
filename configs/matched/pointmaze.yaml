@@ -1,0 +1,21 @@
+seed: 0
+input: data/processed/pointmaze_medium
+output_dir: data/processed/matched/pointmaze_medium
+manifest_dir: data/manifests/lab_review_core_v1
+critical_region:
+  frozen: true
+  selection_audit: results/dataset_audit/pointmaze_medium/critical_region_audit.json
+  selection_rule: highest-betweenness feasible articulation cell; no policy outcomes used
+  observation_dims: [0, 1]
+  lower: [0.05, 0.05]
+  upper: [0.95, 0.95]
+matching:
+  base_trajectories: 100
+  added_trajectories: 40
+  support_level: 1.0
+  max_transition_error: 0.02
+  max_mean_return_error_fraction: 0.02
+  max_global_coverage_error_fraction: 0.03
+  max_median_length_error_fraction: 0.05
+  max_action_mean_standardized_error: 0.25
+  min_critical_coverage_separation: 0.02

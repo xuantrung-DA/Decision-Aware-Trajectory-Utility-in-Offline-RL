@@ -1,0 +1,66 @@
+experiment:
+  id: LAB_REVIEW_CORE_V1
+  version: 1
+  scope: core-paper-ready-for-lab-review
+  expected_job_count: 86
+  expected_total_updates: 17800000
+  base_training_config: configs/experiments/pointmaze_iql.yaml
+  preregistration: data/manifests/lab_review_core_v1/pre_registration.json
+  expected_minutes:
+    bc: 20
+    iql: 60
+    rebrac: 40
+    cql: 150
+  blocks:
+    - id: A_CORE
+      claim: C1/C3/C4
+      datasets: [configs/datasets/pointmaze_medium.yaml]
+      conditions:
+        - reference_critical_high
+        - critical_low
+        - helpful_low_return
+        - harmful_low_return
+      condition_root: data/processed/matched/pointmaze_medium
+      algorithms:
+        - configs/algorithms/iql.yaml
+        - configs/algorithms/rebrac.yaml
+        - configs/algorithms/bc.yaml
+      seeds: [0, 1, 2]
+      training_steps: 200000
+    - id: B_MARGINAL
+      claim: C2/C3
+      datasets: [configs/datasets/pointmaze_medium.yaml]
+      removals:
+        - remove_top_datu
+        - remove_bottom_datu
+        - remove_top_return
+        - remove_bottom_return
+        - remove_helpful_controlled
+        - remove_harmful_controlled
+      removal_root: data/processed/removals/pointmaze_core
+      algorithms:
+        - configs/algorithms/iql.yaml
+        - configs/algorithms/rebrac.yaml
+      seeds: [0, 1, 2]
+      training_steps: 200000
+      requires_preregistration: true
+    - id: C_CQL_DIAGNOSTIC
+      claim: C4-mechanism-boundary
+      datasets: [configs/datasets/pointmaze_medium.yaml]
+      conditions: [reference_critical_high, critical_low]
+      condition_root: data/processed/matched/pointmaze_medium
+      algorithms: [configs/algorithms/cql.yaml]
+      seeds: [0, 1, 2]
+      training_steps: 300000
+    - id: D_HEADLINE_EXTRA_SEEDS
+      claim: C1/C3-headline-precision
+      datasets: [configs/datasets/pointmaze_medium.yaml]
+      conditions:
+        - reference_critical_high
+        - critical_low
+        - helpful_low_return
+        - harmful_low_return
+      condition_root: data/processed/matched/pointmaze_medium
+      algorithms: [configs/algorithms/iql.yaml]
+      seeds: [3, 4]
+      training_steps: 200000

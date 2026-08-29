@@ -1,0 +1,15 @@
+dataset:
+  id: D4RL/pointmaze/medium-v2
+  env_id: PointMaze_Medium-v3
+  path: data/processed/pointmaze_medium
+  observation_keys: [observation, desired_goal]
+  normalize_observations: true
+  normalize_rewards: false
+  max_transitions: null
+  critical_region:
+    frozen: true
+    selection_audit: results/dataset_audit/pointmaze_medium/critical_region_audit.json
+    selection_rule: highest-betweenness feasible articulation cell; no policy outcomes used
+    observation_dims: [0, 1]
+    lower: [0.05, 0.05]
+    upper: [0.95, 0.95]

@@ -1,0 +1,5 @@
+algorithm:
+  name: bc
+  hidden_dims: [256, 256]
+  learning_rate: 0.0003
+  weight_decay: 0.0

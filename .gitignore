@@ -1,0 +1,53 @@
+# Python bytecode and tool caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local environments and editor state
+.venv/
+venv/
+.env
+.env.*
+.idea/
+.vscode/
+*.code-workspace
+
+# Build and notebook artifacts
+build/
+dist/
+*.ipynb_checkpoints/
+
+# Generated research artifacts (may contain large arrays/checkpoints)
+/data/
+/results/
+/runs/
+*.pt
+*.pth
+*.ckpt
+*.npy
+*.npz
+*.hdf5
+
+# Internal notes and local audit checkout
+/docs/
+/.remote-audit/
+
+# Out-of-scope experiment branches retained locally
+/configs/datasets/*
+!/configs/datasets/pointmaze_medium.yaml
+/configs/experiments/*
+!/configs/experiments/lab_review_core_v1.yaml
+!/configs/experiments/pointmaze_iql.yaml
+/scripts/select_subset.py
+/scripts/marginal_utility.py
+/src/datu/datasets/perturbations.py
+
+# OS metadata
+.DS_Store
+Thumbs.db
+Desktop.ini

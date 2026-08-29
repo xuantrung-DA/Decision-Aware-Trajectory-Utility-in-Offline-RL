@@ -1,0 +1,23 @@
+_base_:
+  - ../algorithms/iql.yaml
+  - ../datasets/pointmaze_medium.yaml
+seed: 0
+device: auto
+training:
+  steps: 500000
+  batch_size: 256
+  log_interval: 1000
+  progress_interval: 1000
+  checkpoint_interval: 50000
+  metric_abs_warning: 1000000.0
+  throughput_warning_ratio: 0.5
+  checkpoint_selection: final
+evaluation:
+  episodes: 20
+  seed: 10000
+  max_episode_steps: 250
+  normalized_score: null
+logging:
+  root: results/runs
+  tensorboard: true
+  dataset_metrics_cache: results/cache/dataset_metrics
