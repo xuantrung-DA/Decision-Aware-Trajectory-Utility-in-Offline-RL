@@ -29,6 +29,7 @@ dist/
 *.pt
 *.pth
 *.ckpt
+*.tar.gz
 *.npy
 *.npz
 *.hdf5
