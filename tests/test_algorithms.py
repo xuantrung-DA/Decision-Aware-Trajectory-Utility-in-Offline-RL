@@ -36,3 +36,47 @@ def test_reproducible_initialization(tiny_dataset: TransitionDataset) -> None:
     set_seed(19)
     second = build_agent(config, tiny_dataset.observation_dim, tiny_dataset.action_dim, "cpu")
     assert np.array_equal(first_action, second.act(tiny_dataset.observations[0]))
+
+
+@pytest.mark.parametrize(
+    ("name", "extras"),
+    [
+        ("bc", {"learning_rate": 3e-4}),
+        ("rebrac", {"policy_delay": 2}),
+        ("cql", {"cql_n_actions": 2}),
+    ],
+)
+def test_non_iql_agents_ignore_frozen_matrix_iql_fields(
+    name: str,
+    extras: dict[str, float | int],
+    tiny_dataset: TransitionDataset,
+) -> None:
+    config = {
+        "algorithm": {
+            "name": name,
+            "hidden_dims": [8, 8],
+            "actor_lr": 3e-4,
+            "critic_lr": 3e-4,
+            "value_lr": 3e-4,
+            "discount": 0.99,
+            "tau": 0.005,
+            "expectile": 0.7,
+            "beta": 3.0,
+            "max_weight": 100.0,
+            **extras,
+        }
+    }
+    agent = build_agent(
+        config,
+        tiny_dataset.observation_dim,
+        tiny_dataset.action_dim,
+        "cpu",
+    )
+    metrics = agent.train_step(tiny_dataset.sample(8, np.random.default_rng(0), "cpu"))
+    assert metrics and all(np.isfinite(value) for value in metrics.values())
+
+
+def test_agent_config_still_rejects_unknown_typo(tiny_dataset: TransitionDataset) -> None:
+    config = {"algorithm": {"name": "rebrac", "policy_delai": 2}}
+    with pytest.raises(ValueError, match="policy_delai"):
+        build_agent(config, tiny_dataset.observation_dim, tiny_dataset.action_dim, "cpu")

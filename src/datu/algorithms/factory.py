@@ -16,6 +16,23 @@ AGENTS = {
     "rebrac": ReBRACAgent,
 }
 
+# The frozen v1 matrix uses an IQL base training config and then overlays the
+# target algorithm. Its recursive merge intentionally preserves shared fields,
+# but also leaves these IQL-only fields behind for BC, CQL, and ReBRAC. They
+# are inert for those constructors and may be discarded without changing the
+# target algorithm's registered hyperparameters. Unknown keys outside this
+# explicit compatibility set must still fail fast.
+INHERITED_IQL_KEYS = {
+    "actor_lr",
+    "critic_lr",
+    "value_lr",
+    "discount",
+    "tau",
+    "expectile",
+    "beta",
+    "max_weight",
+}
+
 
 def build_agent(
     config: Mapping[str, Any],
@@ -30,8 +47,10 @@ def build_agent(
     constructor = AGENTS[name]
     valid = set(inspect.signature(constructor.__init__).parameters) - {"self"}
     unknown = set(algorithm_config) - valid
-    if unknown:
-        raise ValueError(f"Unknown {name} config keys: {sorted(unknown)}")
+    unexpected = unknown - INHERITED_IQL_KEYS
+    if unexpected:
+        raise ValueError(f"Unknown {name} config keys: {sorted(unexpected)}")
+    algorithm_config = {key: value for key, value in algorithm_config.items() if key in valid}
     return constructor(
         observation_dim=observation_dim,
         action_dim=action_dim,
