@@ -28,6 +28,9 @@ def test_core_matrix_dry_run_is_exact_and_preregistered(tmp_path: Path) -> None:
     plan = json.loads((plan_dir / "jobs.json").read_text(encoding="utf-8"))
     assert plan["job_count"] == 86
     assert plan["total_training_updates"] == 17_800_000
+    assert plan["matrix_signature"] == (
+        "a6ec37a53ef4b60a66520252a44625b50399982e402f6137383ea725310c1168"
+    )
     assert Counter(job["block"] for job in plan["jobs"]) == {
         "A_CORE": 36,
         "B_MARGINAL": 36,

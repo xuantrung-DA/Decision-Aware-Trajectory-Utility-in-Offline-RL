@@ -123,7 +123,10 @@ def expand_jobs(experiment_config: dict[str, Any], plan_dir: Path) -> list[dict[
                                 ),
                             )
                             root = Path(str(template).format(dataset=dataset_name))
-                            config["dataset"]["path"] = str(root / variant)
+                            # Config hashes are part of the frozen matrix signature. Keep
+                            # repository-relative paths platform-neutral so Windows and
+                            # Linux/Kaggle expand to the same registered job configuration.
+                            config["dataset"]["path"] = (root / variant).as_posix()
                             preregistration_path = block.get(
                                 "preregistration", experiment.get("preregistration")
                             )
@@ -141,7 +144,7 @@ def expand_jobs(experiment_config: dict[str, Any], plan_dir: Path) -> list[dict[
                                 ),
                             )
                             root = Path(str(template).format(dataset=dataset_name))
-                            config["dataset"]["path"] = str(root / variant)
+                            config["dataset"]["path"] = (root / variant).as_posix()
                             preregistration_path = block.get(
                                 "preregistration", experiment.get("preregistration")
                             )

@@ -13,7 +13,7 @@ def require_minari() -> Any:
     except ImportError as exc:
         raise RuntimeError(
             "Minari is required for public datasets. Install requirements, then download the "
-            "dataset manually with the command in docs/dataset_protocol.md."
+            "dataset manually with the command in README.md (Reproduction)."
         ) from exc
     return minari
 

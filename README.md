@@ -13,15 +13,16 @@ $$
 U_A(G \mid D) = J(A,D) - J(A,D \setminus G).
 $$
 
-Decision-Aware Trajectory Utility (DATU) estimates this signed, algorithm-conditional marginal
-utility using only frozen offline data. It combines decision sensitivity, epistemic uncertainty,
-and local support contribution. Environment rollouts are used only for final policy evaluation;
-they never define the critical region, intervention groups, utility scores, or checkpoints.
+Decision-Aware Trajectory Utility (DATU) is a **nonnegative offline ranking proxy** for this
+signed empirical target, not a calibrated signed-utility predictor. It combines decision
+sensitivity, ensemble disagreement, and local support contribution. The original scorer uses
+one fixed IQL reference ensemble for both downstream learners. Environment rollouts measure
+final policy performance and removal utility; they do not select the original groups or checkpoints.
 
-> **Status (2026-08-31):** 49/86 frozen official jobs are complete with zero failures.
-> C1 passes in the preregistered five-seed IQL analysis; the same contrast does not replicate
-> under ReBRAC or BC. Initial IQL removal results favor top-DATU over bottom-DATU trajectories,
-> but the marginal-utility block is incomplete. This is a protocol-locked snapshot, not a pilot.
+> **Status (2026-09-10):** all **86/86 original full-training jobs** are complete, not pilot runs.
+> Critical-support benefits are algorithm-dependent. Removing top-DATU groups hurts IQL and
+> ReBRAC, but DATU does not consistently beat reward density. Six additional post-hoc ReBRAC
+> random controls are prepared; their training results have **not yet been verified locally**.
 
 ## Research questions
 
@@ -41,9 +42,12 @@ The frozen study uses `D4RL/pointmaze/medium-v2` and 86 full-training jobs:
 | Headline precision | 4 IQL conditions × 2 additional seeds, 200k updates | 8 |
 | **Total** | **17.8M gradient updates** | **86** |
 
-The component ablation is fixed to DATU full, no uncertainty, no sensitivity, and no local
-support. Exhaustive leave-one-group-out retraining, subset-selection benchmarks, MuJoCo/AntMaze
-breadth, and the former 884-job Cartesian matrix are outside this study.
+The planned component ablations are DATU full, no uncertainty, no sensitivity, and no local
+support. Descriptive **score-only** ablations on existing groups are available locally;
+ablation-specific policy retraining is not complete. Exhaustive leave-one-group-out retraining,
+subset-selection benchmarks, MuJoCo/AntMaze breadth, and the former 884-job matrix are outside
+this study. Fitting the five-member reference scorer costs a further 500k updates, separate
+from the 17.8M downstream updates.
 
 ## Execution progress
 
@@ -51,18 +55,24 @@ breadth, and the former 884-job Cartesian matrix are outside this study.
 | --- | ---: | ---: | --- |
 | Core phenomenon | **36** | 36 | Complete for BC, IQL, and ReBRAC |
 | Headline precision | **8** | 8 | Complete |
-| Marginal utility | **5** | 36 | IQL top-DATU complete; bottom-DATU 2/3 seeds |
-| CQL diagnostic | **0** | 6 | Pending |
-| **Total** | **49** | **86** | **37 jobs remaining** |
+| Marginal utility | **36** | 36 | Six removals, IQL and ReBRAC |
+| CQL diagnostic | **6** | 6 | Complete |
+| **Total** | **86** | **86** | **Original study complete** |
 
-## Interim confirmatory results
+## Audited original-study results
+
+Intervals below use corrected SciPy BCa bootstrap with 10,000 resamples, RNG seed 0, and
+**paired training seeds** as the resampling unit. Probability differences are rounded to 12
+decimals before resampling to stabilize floating-point ties. These small-sample intervals are
+conditional on fixed datasets and the shared 20-episode evaluation panel; they are not adjusted
+for multiple comparisons. `pp` means percentage points; paired effect size is Cohen's `d_z`.
 
 ### C1: decision-critical support under IQL
 
 **Claim C1:** offline datasets with similar global statistics but different decision-critical
 support can produce materially different downstream policy performance.
 
-This snapshot uses IQL trained for 200k updates on each frozen condition. Every policy seed is
+This analysis uses IQL trained for 200k updates on each frozen condition. Every policy seed is
 evaluated on the same predefined 20-episode, 250-step protocol; the final checkpoint is selected
 without online validation. Seeds 0–2 belong to `A_CORE`, while preregistered headline seeds 3–4
 belong to `D_HEADLINE_EXTRA_SEEDS`. These are 20 official matrix jobs, not smoke-test or pilot
@@ -94,18 +104,18 @@ The reference and critical-low dataset hashes are respectively
 | Critical-low success | 45% | 40% | 50% | 55% | 45% | 47.0% ± 5.7% |
 | Paired difference | +25 pp | 0 pp | +10 pp | +10 pp | +5 pp | **+10.0 pp** |
 
-| Preregistered analysis | Result |
+| Frozen-protocol analysis | Result |
 | --- | ---: |
 | Mean paired success difference | **+10.0 percentage points** |
 | BCa 95% bootstrap interval | **[+4.0, +18.0] percentage points** |
-| Paired Cohen's d | **1.07** |
+| Paired Cohen's d_z | **1.07** |
 | Seed directions | **4 positive, 1 tied, 0 negative** |
-| Frozen C1 acceptance decision | **Pass** |
+| Within-study C1 threshold | **Met** |
 | Strong-pass threshold (+15 pp mean) | Not met |
 
 Within the frozen PointMaze–IQL setting, this supports C1: matching conventional dataset-level
 statistics did not remove the performance gap associated with decision-critical support. This
-result does **not** yet establish DATU's marginal-utility ranking or cross-algorithm generality.
+result alone does **not** establish DATU's ranking superiority or cross-algorithm generality.
 
 ### Cross-algorithm mechanism boundary
 
@@ -114,14 +124,15 @@ is positive under IQL, but it changes sign under ReBRAC and BC:
 
 | Algorithm | Seeds | Reference critical-high | Critical-low | Paired mean difference | Interpretation |
 | --- | ---: | ---: | ---: | ---: | --- |
-| IQL | 5 | **57.0%** | **47.0%** | **+10.0 pp** | C1 pass |
+| IQL | 5 | **57.0%** | **47.0%** | **+10.0 pp** | Positive within this construction |
 | ReBRAC | 3 | 41.7% | 45.0% | -3.3 pp | Does not replicate IQL |
 | BC | 3 | 36.7% | 41.7% | -5.0 pp | Mechanism boundary |
+| CQL | 3 | 53.3% | 38.3% | +15.0 pp | Wide CI: [-5.0, +35.0] pp |
 
 For ReBRAC, the three paired differences are +15, -15, and -10 percentage points; their BCa
-95% interval is [-15.0, +6.7] percentage points. Consequently, the frozen cross-algorithm C4
-criterion is not met. This negative result is retained because it indicates that the effect is
-algorithm-conditional rather than universal.
+95% interval is [-13.3, +15.0] percentage points. The frozen cross-algorithm C4 criterion is
+not met. CQL is directionally positive but imprecise; these results do not establish a universal
+critical-support benefit or a formal causal mechanism.
 
 The helpful-versus-harmful matched-condition contrast is also inconsistent across algorithms:
 
@@ -131,41 +142,64 @@ The helpful-versus-harmful matched-condition contrast is also inconsistent acros
 | ReBRAC, 3 seeds | 46.7% | 45.0% | +1.7 pp |
 | BC, 3 seeds | 43.3% | 48.3% | -5.0 pp |
 
-For IQL, the paired 95% interval is [-10.0, +15.0] percentage points with Cohen's d = -0.066.
-The core comparison therefore does not support a stable helpful-over-harmful advantage. The
-direct marginal-utility test for these groups remains pending in the removal block.
+For IQL, the paired BCa 95% interval is [-8.0, +20.0] percentage points with `d_z = -0.066`.
+The core comparison does not support a stable helpful-over-harmful advantage. The completed
+controlled removals below also have algorithm-dependent signs.
 
-### Preliminary DATU marginal-utility signal
+### Group-removal utility
 
-The first five `B_MARGINAL` IQL jobs compare the performance loss caused by removing trajectories
-ranked at the top or bottom by DATU. Empirical marginal utility is measured as
-`success(full dataset) - success(dataset after removal)`.
+All 36 `B_MARGINAL` runs are complete. Each intervention removes 40 of 180 trajectories;
+retained transition counts differ across original groups. Positive utility means removal hurts.
 
-| Removal intervention | Completed seeds | Seed-level marginal utility | Mean |
-| --- | ---: | --- | ---: |
-| Remove top-DATU | 3/3 | +30, +5, +5 pp | **+13.3 pp** |
-| Remove bottom-DATU | 2/3 | +10, -10 pp | **0.0 pp** |
-| Top minus bottom, paired seeds | 2/3 | +20, +15 pp | **+17.5 pp** |
+| Removed group | IQL utility, mean [BCa 95% CI], pp | ReBRAC utility, mean [BCa 95% CI], pp |
+| --- | ---: | ---: |
+| Top DATU | **+13.3 [+5.0, +30.0]** | **+11.7 [+5.0, +20.0]** |
+| Bottom DATU | +8.3 [-10.0, +20.0] | 0.0 [-15.0, +8.3] |
+| Top reward density | +15.0 [-10.0, +28.3] | -3.3 [-15.0, +3.3] |
+| Bottom reward density | -8.3 [-30.0, +3.3] | -8.3 [-10.0, -5.0] |
+| Helpful controlled | +8.3 [-15.0, +20.0] | -1.7 [-15.0, +10.0] |
+| Harmful controlled | -1.7 [-25.0, +20.0] | +1.7 [-5.0, +5.0] |
 
-Removing top-DATU trajectories hurts IQL performance in all three completed seeds. In the two
-currently paired seeds, this loss is larger than for bottom-DATU removal. This is encouraging
-evidence for DATU's ranking, but it is not a confirmatory C3 result: one paired seed and the
-return/controlled baselines are still missing, and the ReBRAC removal block has not started.
+Each cell uses three paired training seeds. IQL top-DATU effects are `[30, 5, 5]` pp;
+their corrected CI is **[5, 30]**, not the [5, 21.7] interval from an earlier bootstrap
+implementation. ReBRAC effects are `[20, 5, 10]` pp. This supports positive removal utility
+for the top-scoring group, but does not by itself show superiority to random removal.
+
+### Utility ranking against baselines
+
+| Offline score | IQL pairwise accuracy | ReBRAC pairwise accuracy |
+| --- | ---: | ---: |
+| DATU | 10/14 (71.4%) | **10/15 (66.7%)** |
+| Reward density | **14/14 (100%)** | 9/15 (60.0%) |
+| Rarity | 7/14 (50.0%) | 7/15 (46.7%) |
+| Global coverage | 39.3% | 23.3% |
+
+These are descriptive rankings over six overlapping intervention groups, not independent
+pairwise samples. Utility ties are excluded and prediction ties receive half credit.
+DATU leads these baselines for ReBRAC, but reward density is stronger for IQL; universal
+ranking superiority is not supported.
 
 ### Claim status
 
-| Claim | Current status | Required next evidence |
+| Claim | Audited interpretation | Remaining limitation |
 | --- | --- | --- |
-| C1: critical support beyond global statistics | **IQL pass** | Report algorithm boundary |
-| C2: helpful vs. harmful marginal utility | Pending; core proxy not supported | Complete controlled removals |
-| C3: DATU vs. return/rarity/global coverage | **Promising, incomplete** | Complete paired IQL/ReBRAC removals |
-| C4: not an IQL-only artifact | **A_CORE criterion not met** | Focused CQL mechanism diagnostic |
+| C1: critical support beyond global statistics | Positive within IQL | One fixed dataset construction |
+| C2: helpful vs. harmful utility | No consistent cross-learner advantage | Mixed full-condition and removal results |
+| C3: DATU vs. baseline scores | Algorithm-dependent; not universal superiority | Overlapping groups; random controls pending |
+| C4: not an IQL-only artifact | Original replication criterion not met | CQL direction is positive but imprecise |
 
-The snapshot was recovered from a checkpoint archive with SHA-256
-`630d7441fb84219747ea46a1dd4e179160c8a381792c478f4411726f59ad6763`. All 49 final
-checkpoints loaded successfully; 4,268 serialized tensors (36,187,633 scalar values) and all
-training metrics were finite. Every run used the frozen 20-episode evaluation protocol, and no
-online evaluation was used for checkpoint selection.
+Additional limitations: selected trajectories all have return 1, so reward density is inverse
+episode length; names such as `low_return` and `remove_top_return` are retained legacy IDs.
+The frozen rarity implementation uses external neighbor ranks 2–21 for k=20, and local-support
+search is approximate. These behaviors are disclosed, not silently changed after observing
+outcomes. A fixed IQL scorer is not itself an algorithm-conditioned DATU implementation.
+
+Source of this report: local final archive `datu_phase3_final_86jobs_kaggle_posix.zip`, SHA-256
+`244f59cad14b4410a5590c4dada200a6c40b8cf1f57fa41f718b3f28d4ebbd4e`, audited into
+`paper/audit/numbers.json`, `all_runs.csv`, `removals.csv`, and `ranking.csv`.
+The original matrix signature is
+`a6ec37a53ef4b60a66520252a44625b50399982e402f6137383ea725310c1168`.
+Those local research artifacts are **not distributed in this source-only repository**.
 
 ## Repository layout
 
@@ -176,9 +210,10 @@ src/datu/      Algorithms, trajectory data model, utility estimators, and evalua
 tests/         Unit and matrix-integrity tests
 ```
 
-Generated datasets, preregistrations, checkpoints, logs, figures, and internal notes are excluded
-from Git. Dataset and run manifests contain content hashes so local/Kaggle artifacts can still be
-audited.
+Generated datasets, preregistrations, checkpoints, ZIP/TAR archives, logs, figures, the working
+paper and internal notes (including local `ABOUT.md`) are excluded from Git. A clone contains
+the implementation, not the historical run artifacts. Dataset and run manifests contain hashes;
+exact replay requires the corresponding frozen artifacts rather than only regenerating paths.
 
 ## Installation
 
@@ -186,22 +221,33 @@ Python 3.11 is the reference environment.
 
 ```bash
 python -m venv .venv
+```
+
+Activate it with `source .venv/bin/activate` on Linux/macOS or
+`.\.venv\Scripts\Activate.ps1` in Windows PowerShell. Then:
+
+```bash
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev,robotics]"
 ```
 
-Verify the code without downloading data:
+Python 3.11 is used in CI; historical Kaggle policy runs used Python 3.12 and Torch 2.10.0.
+Dependencies have lower bounds, not a full lockfile. Preserve run-level software versions when
+reproducing results. Load only trusted checkpoints: model loading uses PyTorch serialization.
+
+Verify without downloading data or launching official training (tests include tiny synthetic updates):
 
 ```bash
 python -m ruff check src scripts tests
 python -m pytest -q
-python scripts/smoke_test.py
-python scripts/run_experiment.py --config configs/experiments/lab_review_core_v1.yaml
+python scripts/run_experiment.py --config configs/experiments/lab_review_core_v1.yaml --plan-dir results/plans/RELEASE_CHECK
 ```
 
 ## Reproduction
 
-The code never downloads a dataset implicitly. Download the single active dataset manually:
+For a **new reproduction**, download the single active dataset manually. To resume existing
+research, restore its verified artifacts and plan instead; do not rebuild the completed study.
+The code does not download data implicitly:
 
 ```bash
 python scripts/download_datasets.py D4RL/pointmaze/medium-v2
@@ -219,7 +265,10 @@ python scripts/freeze_preregistration.py --reference-dataset data/processed/matc
 python scripts/run_experiment.py --config configs/experiments/lab_review_core_v1.yaml --preflight-data
 ```
 
-Training requires an explicit `--execute`; without it the runner only validates and writes a plan:
+The **matrix runner** requires explicit `--execute`; without it the runner only validates and
+writes a plan. Other entrypoints differ: `train.py` starts training directly and `compute_datu.py`
+can fit the reference ensemble when its cache is missing. The command below launches the
+original full study and is not needed to inspect or resume supplemental work:
 
 ```bash
 python scripts/run_experiment.py --config configs/experiments/lab_review_core_v1.yaml --execute
@@ -233,7 +282,31 @@ python scripts/run_kaggle_session.py --execute --walltime-hours 10.5
 
 Each progress line reports step, throughput, ETA, sampler/update latency, VRAM, and current losses.
 NaN/Inf aborts immediately, interrupted runs preserve a checkpoint, and completed stable job IDs
-are skipped on resume. Use `--retry-failed` only after fixing an infrastructure-level failure.
+are skipped on resume. This is queue-level recovery, not guaranteed exact optimizer/RNG resume
+for an interrupted job. Use `--retry-failed` only after inspecting the failure.
+
+## Post-hoc supplement
+
+`IJMLC_SUPP_V1` is separate from the completed 86-run study:
+
+- Two length-stratified random removal groups × three seeds × ReBRAC, 200k updates: six jobs.
+- Match the removed transition budget to within 1%; freeze the first acceptable draws.
+- Fresh 100-episode evaluation panel; average random draws **within each training seed** (n=3).
+- Descriptive score-only component ablations reuse stored components and original groups.
+
+Prepare the small input bundle from local frozen data, preregistration and the final archive:
+
+```bash
+python scripts/build_ijmlc_bundle.py --archive datu_phase3_final_86jobs_kaggle_posix.zip
+```
+
+This writes `dist/datu_ijmlc_supplement_input.zip`, `kaggle_ijmlc_cells.md` and a notebook.
+Use those generated cells with expanded original checkpoint inputs on Kaggle.
+`setup_ijmlc_kaggle.py` locates files by content and verifies hashes; `run_ijmlc_supplement.py`
+performs CUDA/evaluation preflight, bounded training, reevaluation and output backups.
+Updating GitHub does not update an existing Kaggle input. Never switch source underneath an
+active session. Prepared configurations are not completed jobs, and no supplemental performance
+claim is made here before its output has been audited.
 
 ## License
 

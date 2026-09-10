@@ -29,14 +29,30 @@ dist/
 *.pt
 *.pth
 *.ckpt
+*.zip
+*.tar
 *.tar.gz
+*.tgz
+*.sha256
+*.pdf
 *.npy
 *.npz
 *.hdf5
+*.h5
+*.log
+/supplement_assets/
+/supplement_bundle.json
+/supplement_input_index.json
+/datu_bundle_manifest.json
 
 # Internal notes and local audit checkout
 /docs/
 /.remote-audit/
+/ABOUT.md
+/paper/
+/image/
+/figures/
+/scripts/generate_paper_figures.py
 
 # Out-of-scope experiment branches retained locally
 /configs/datasets/*

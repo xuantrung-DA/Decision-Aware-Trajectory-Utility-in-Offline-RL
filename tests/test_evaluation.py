@@ -55,6 +55,16 @@ def test_bootstrap_ci_and_paired_difference() -> None:
     assert np.isclose(paired["estimate"], 1.0)
 
 
+def test_bca_uses_midrank_for_tied_bootstrap_statistics() -> None:
+    # With three training seeds the bootstrap distribution is highly discrete.
+    # A previous hand-written bias correction incorrectly gave an upper
+    # endpoint of 21.67; the reference SciPy implementation gives 30.0.
+    interval = bootstrap_ci(np.asarray([30.0, 5.0, 5.0]), resamples=10_000, seed=0)
+    assert np.isclose(interval["estimate"], 40.0 / 3.0)
+    assert np.isclose(interval["lower"], 5.0)
+    assert np.isclose(interval["upper"], 30.0)
+
+
 def test_correlations_classification_and_metric_ci() -> None:
     target = np.arange(12, dtype=np.float64)
     predicted = target + np.sin(target) * 0.1

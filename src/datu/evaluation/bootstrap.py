@@ -4,7 +4,7 @@ from collections.abc import Callable
 from typing import Any
 
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import bootstrap as scipy_bootstrap
 
 
 def bootstrap_ci(
@@ -15,37 +15,37 @@ def bootstrap_ci(
     seed: int = 0,
     method: str = "bca",
 ) -> dict[str, float | int | str]:
-    """One-sample percentile or bias-corrected accelerated bootstrap interval."""
+    """One-sample percentile or bias-corrected accelerated bootstrap interval.
+
+    SciPy is the reference implementation. Delegating BCa construction avoids
+    unstable hand-written bias correction when a small, discrete training-seed
+    bootstrap distribution contains many ties.
+    """
     data = np.asarray(values, dtype=np.float64)
     if data.ndim != 1 or data.size < 2 or not np.isfinite(data).all():
         raise ValueError("Bootstrap input must be a finite vector with at least two values")
     if not 0.0 < confidence < 1.0 or resamples < 100:
         raise ValueError("Invalid confidence level or too few bootstrap resamples")
-    rng = np.random.default_rng(seed)
-    indices = rng.integers(0, data.size, size=(resamples, data.size))
-    bootstrap = np.asarray([statistic(sample) for sample in data[indices]], dtype=np.float64)
     estimate = float(statistic(data))
-    alpha = 1.0 - confidence
-    if method == "percentile":
-        low, high = np.quantile(bootstrap, [alpha / 2.0, 1.0 - alpha / 2.0])
-    elif method == "bca":
-        proportion = np.clip(np.mean(bootstrap < estimate), 1e-6, 1.0 - 1e-6)
-        z0 = norm.ppf(proportion)
-        jackknife = np.asarray(
-            [statistic(np.delete(data, index)) for index in range(data.size)], dtype=np.float64
-        )
-        mean_jackknife = np.mean(jackknife)
-        numerator = np.sum((mean_jackknife - jackknife) ** 3)
-        denominator = 6.0 * np.sum((mean_jackknife - jackknife) ** 2) ** 1.5
-        acceleration = numerator / denominator if denominator > 0 else 0.0
-        probabilities = []
-        for tail in (alpha / 2.0, 1.0 - alpha / 2.0):
-            z = norm.ppf(tail)
-            adjusted = norm.cdf(z0 + (z0 + z) / (1.0 - acceleration * (z0 + z)))
-            probabilities.append(float(np.clip(adjusted, 0.0, 1.0)))
-        low, high = np.quantile(bootstrap, probabilities)
-    else:
+    if method not in {"percentile", "bca"}:
         raise ValueError("method must be 'percentile' or 'bca'")
+
+    # SciPy's BCa interval is undefined for a degenerate distribution. The
+    # interval for an exactly constant statistic is nevertheless unambiguous.
+    if np.all(data == data[0]):
+        low = high = estimate
+    else:
+        result = scipy_bootstrap(
+            (data,),
+            statistic,
+            confidence_level=confidence,
+            n_resamples=resamples,
+            method="BCa" if method == "bca" else "percentile",
+            random_state=np.random.default_rng(seed),
+            vectorized=False,
+        )
+        low = float(result.confidence_interval.low)
+        high = float(result.confidence_interval.high)
     return {
         "estimate": estimate,
         "lower": float(low),

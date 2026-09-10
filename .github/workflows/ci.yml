@@ -28,3 +28,5 @@ jobs:
         run: python -m ruff check src scripts tests
       - name: Test
         run: python -m pytest -q
+      - name: Build wheel
+        run: python -m pip wheel . --no-deps --wheel-dir dist/wheels
