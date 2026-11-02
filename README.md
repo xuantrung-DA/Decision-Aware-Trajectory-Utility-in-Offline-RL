@@ -24,6 +24,23 @@ final policy performance and removal utility; they do not select the original gr
 > ReBRAC, but DATU does not consistently beat reward density. Six additional post-hoc ReBRAC
 > random controls are prepared; their training results have **not yet been verified locally**.
 
+## Public evidence boundary
+
+This is a **source-only research release**. The 86-job tables below are reported
+historical results; the frozen archive, checkpoints, predictions and audit CSVs
+are not distributed here, so a public clone cannot independently recompute them.
+The archive hash identifies the required artifact but is not a download link or
+proof that its contents have been independently verified. CI verifies source
+contracts and synthetic runs, not the 86 full-training jobs.
+
+To make the historical tables externally auditable, a future artifact release
+must include the frozen plan/matrix and dataset manifests, per-run metrics and
+evaluation-panel IDs, plus `paper/audit/numbers.json`, `all_runs.csv`,
+`removals.csv` and `ranking.csv`, with checksums and the aggregation command.
+Respect dataset redistribution terms; publish acquisition instructions where
+raw data cannot be shared. No new experiment or supplemental result is claimed
+by this documentation update.
+
 ## Research questions
 
 - **C1:** Can datasets with matched global statistics but different decision-critical support lead
